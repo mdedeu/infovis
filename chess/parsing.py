@@ -1,48 +1,106 @@
-import pandas as pd
 import chess.pgn
-import datetime
+import csv
+from datetime import datetime, timedelta
+import re
 
-# Function to parse PGN file and extract required information
-def parse_pgn(file_path):
-    games_data = []
-    with open(file_path, 'r') as pgn_file:
-        while True:
-            game = chess.pgn.read_game(pgn_file)
-            if game is None:
-                break
-            
-            # Extract game information
-            game_info = {}
-            game_info['Date'] = game.headers.get('Date', 'Unknown')
-            game_info['Time'] = game.headers.get('Time', 'Unknown')
-            game_info['Opening'] = game.headers.get('Opening', 'Unknown')
-            game_info['White'] = game.headers.get('White', 'Unknown')
-            game_info['Black'] = game.headers.get('Black', 'Unknown')
-            
-            # Determine the color of 'marcosdedeu'
-            if game_info['White'] == 'marcosdedeu':
-                game_info['Color'] = 'White'
-            elif game_info['Black'] == 'marcosdedeu':
-                game_info['Color'] = 'Black'
-            else:
-                game_info['Color'] = 'Unknown'
-            
-            # Calculate time between each move
-            moves = list(game.mainline_moves())
-            move_times = []
-            for move in moves:
-                # Here we would calculate the time between moves if we had timestamps
-                # For now, we will just append a placeholder
-                move_times.append('N/A')
-            game_info['MoveTimes'] = move_times
-            
-            games_data.append(game_info)
-    
-    return pd.DataFrame(games_data)
+# Configura tu nombre de usuario
+username = 'marcosdedeu'
 
-# Parse the PGN file
-pgn_file_path = 'lichess_marcosdedeu_2024-09-10.pgn'
-games_df = parse_pgn(pgn_file_path)
+# Abre el archivo PGN
+pgn_file = 'tus_partidas.pgn'  # Reemplaza con la ruta a tu archivo PGN
+pgn = open(pgn_file, encoding='utf-8')
 
-# Display the head of the dataframe
-games_df.head()
+# Prepara el archivo CSV
+with open('datos_ajedrez.csv', mode='w', newline='', encoding='utf-8') as csv_file:
+    fieldnames = [
+        'NumeroPartida', 'Fecha', 'Hora', 'Color', 'Oponente', 'Resultado',
+        'ECO', 'Apertura', 'Victoria', 'TiempoEntreMovimientos', 'Movimientos'
+    ]
+    writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
+    writer.writeheader()
+
+    numero_partida = 0
+
+    while True:
+        game = chess.pgn.read_game(pgn)
+        if game is None:
+            break  # No hay más partidas
+        numero_partida += 1
+
+        # Extrae los encabezados de la partida
+        headers = game.headers
+        fecha = headers.get('UTCDate', '')
+        hora = headers.get('UTCTime', '')
+        white_player = headers.get('White', '')
+        black_player = headers.get('Black', '')
+        resultado = headers.get('Result', '')
+        eco = headers.get('ECO', '')
+        apertura = headers.get('Opening', '')
+
+        # Determina el color y el oponente
+        if white_player == username:
+            color = 'Blancas'
+            oponente = black_player
+        elif black_player == username:
+            color = 'Negras'
+            oponente = white_player
+        else:
+            continue  # Ignora partidas donde no jugaste
+
+        # Determina si fue victoria (1), derrota (0) o tablas (0.5)
+        if (resultado == '1-0' and color == 'Blancas') or (resultado == '0-1' and color == 'Negras'):
+            victoria = 1
+        elif resultado == '1/2-1/2':
+            victoria = 0.5
+        else:
+            victoria = 0
+
+        # Calcula el tiempo entre movimientos
+        tiempos_movimientos = []
+        nodo = game
+        tiempos_reloj = []
+        regex_tiempo = re.compile(r'\[%clk ([0-9:]+)\]')
+
+        while nodo.variations:
+            siguiente_nodo = nodo.variation(0)
+            comentario = nodo.comment
+            match = regex_tiempo.search(comentario)
+            if match:
+                tiempo_str = match.group(1)
+                partes = tiempo_str.split(':')
+                if len(partes) == 3:
+                    horas, minutos, segundos = map(float, partes)
+                else:
+                    horas = 0
+                    minutos, segundos = map(float, partes)
+                tiempo_total = timedelta(hours=horas, minutes=minutos, seconds=segundos).total_seconds()
+                tiempos_reloj.append(tiempo_total)
+            nodo = siguiente_nodo
+
+        # Calcula la diferencia de tiempo entre movimientos
+        for i in range(1, len(tiempos_reloj)):
+            tiempo_entre_movimientos = tiempos_reloj[i - 1] - tiempos_reloj[i]
+            tiempos_movimientos.append(tiempo_entre_movimientos)
+
+        # Promedio del tiempo entre movimientos
+        if tiempos_movimientos:
+            promedio_tiempo = sum(tiempos_movimientos) / len(tiempos_movimientos)
+        else:
+            promedio_tiempo = None
+
+        # Escribe los datos en el CSV
+        writer.writerow({
+            'NumeroPartida': numero_partida,
+            'Fecha': fecha,
+            'Hora': hora,
+            'Color': color,
+            'Oponente': oponente,
+            'Resultado': resultado,
+            'ECO': eco,
+            'Apertura': apertura,
+            'Victoria': victoria,
+            'TiempoEntreMovimientos': promedio_tiempo,
+            'Movimientos': len(tiempos_movimientos) + 1
+        })
+
+print('El archivo CSV ha sido generado exitosamente.')
