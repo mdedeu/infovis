@@ -5,14 +5,13 @@ import re
 
 username = 'marcosdedeu'
 
-pgn_file = '/Users/marcosdedeu/Downloads/chess.pgn'
+pgn_file = '/Users/marcosdedeu/Downloads/chess.pgn'  # Asegúrate de que esta ruta sea correcta
 pgn = open(pgn_file, encoding='utf-8')
 
 with open('datos_ajedrez.csv', mode='w', newline='', encoding='utf-8') as csv_file:
     fieldnames = [
-        'NumeroPartida', 'Fecha', 'Hora', 'Color', 'Oponente', 'Resultado',
-        'ECO', 'Apertura', 'Victoria', 'TuELO', 'ELOOponente',
-        'TiempoEntreMovimientos', 'Movimientos'
+        'NumeroPartida', 'Fecha', 'Hora', 'Color', 'Oponente', 'ECO', 'Apertura',
+        'Victoria', 'TuELO', 'ELOOponente', 'TiempoEntreMovimientos', 'Movimientos'
     ]
     writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
     writer.writeheader()
@@ -70,6 +69,7 @@ with open('datos_ajedrez.csv', mode='w', newline='', encoding='utf-8') as csv_fi
         else:
             continue  # Ignora partidas donde no jugaste
 
+        # Determinar el resultado para calcular 'Victoria'
         if (resultado == '1-0' and color == 'Blancas') or (resultado == '0-1' and color == 'Negras'):
             victoria = 1
         elif resultado == '1/2-1/2':
@@ -77,6 +77,7 @@ with open('datos_ajedrez.csv', mode='w', newline='', encoding='utf-8') as csv_fi
         else:
             victoria = 0
 
+        # Calcular el tiempo entre movimientos
         tiempos_movimientos = []
         nodo = game
         tiempos_reloj = []
@@ -107,6 +108,7 @@ with open('datos_ajedrez.csv', mode='w', newline='', encoding='utf-8') as csv_fi
         else:
             promedio_tiempo = None
 
+        # Escribir los datos en el CSV sin la columna 'Resultado'
         writer.writerow({
             'NumeroPartida': numero_partida,
             'Fecha': fecha_formateada,
@@ -122,4 +124,4 @@ with open('datos_ajedrez.csv', mode='w', newline='', encoding='utf-8') as csv_fi
             'Movimientos': len(tiempos_movimientos) + 1
         })
 
-print('El archivo CSV ha sido generado exitosamente con la fecha en formato adecuado.')
+print('El archivo CSV ha sido generado exitosamente sin la columna "Resultado".')
