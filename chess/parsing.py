@@ -113,7 +113,6 @@ with open('datos_ajedrez.csv', mode='w', newline='', encoding='utf-8') as csv_fi
             'Hora': hora_formateada,
             'Color': color,
             'Oponente': oponente,
-            'Resultado': resultado,
             'ECO': eco,
             'Apertura': apertura,
             'Victoria': victoria,
