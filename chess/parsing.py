@@ -5,7 +5,7 @@ import re
 
 username = 'marcosdedeu'
 
-pgn_file = '/Users/marcosdedeu/Downloads/chess.pgn'  # Asegúrate de que esta ruta sea correcta
+pgn_file = '/Users/marcosdedeu/Downloads/chess-16-09.pgn'  # Asegúrate de que esta ruta sea correcta
 pgn = open(pgn_file, encoding='utf-8')
 
 with open('datos_ajedrez.csv', mode='w', newline='', encoding='utf-8') as csv_file:
@@ -71,11 +71,11 @@ with open('datos_ajedrez.csv', mode='w', newline='', encoding='utf-8') as csv_fi
 
         # Determinar el resultado para calcular 'Victoria'
         if (resultado == '1-0' and color == 'Blancas') or (resultado == '0-1' and color == 'Negras'):
-            victoria = 1
+            victoria = 'WIN'
         elif resultado == '1/2-1/2':
-            victoria = 0.5
+            victoria = 'DRAW'
         else:
-            victoria = 0
+            victoria = 'LOSE'
 
         # Calcular el tiempo entre movimientos
         tiempos_movimientos = []
