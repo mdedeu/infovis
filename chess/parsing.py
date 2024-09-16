@@ -26,8 +26,8 @@ with open('datos_ajedrez.csv', mode='w', newline='', encoding='utf-8') as csv_fi
         numero_partida += 1
 
         headers = game.headers
-        fecha = headers.get('UTCDate', '')
-        hora = headers.get('UTCTime', '')
+        fecha_str = headers.get('UTCDate', '')
+        hora_str = headers.get('UTCTime', '')
         white_player = headers.get('White', '')
         black_player = headers.get('Black', '')
         resultado = headers.get('Result', '')
@@ -36,6 +36,27 @@ with open('datos_ajedrez.csv', mode='w', newline='', encoding='utf-8') as csv_fi
         white_elo = headers.get('WhiteElo', '')
         black_elo = headers.get('BlackElo', '')
 
+        # Parsear la fecha
+        if fecha_str and fecha_str != '????.??.??':
+            try:
+                fecha_obj = datetime.strptime(fecha_str, '%Y.%m.%d').date()
+                fecha_formateada = fecha_obj.strftime('%Y-%m-%d')
+            except ValueError:
+                fecha_formateada = ''
+        else:
+            fecha_formateada = ''
+
+        # Parsear la hora (opcional)
+        if hora_str and hora_str != '??:??:??':
+            try:
+                hora_obj = datetime.strptime(hora_str, '%H:%M:%S').time()
+                hora_formateada = hora_obj.strftime('%H:%M:%S')
+            except ValueError:
+                hora_formateada = ''
+        else:
+            hora_formateada = ''
+
+        # Determinar el color y el oponente
         if white_player == username:
             color = 'Blancas'
             oponente = black_player
@@ -47,7 +68,7 @@ with open('datos_ajedrez.csv', mode='w', newline='', encoding='utf-8') as csv_fi
             tu_elo = black_elo
             elo_oponente = white_elo
         else:
-            continue
+            continue  # Ignora partidas donde no jugaste
 
         if (resultado == '1-0' and color == 'Blancas') or (resultado == '0-1' and color == 'Negras'):
             victoria = 1
@@ -88,8 +109,8 @@ with open('datos_ajedrez.csv', mode='w', newline='', encoding='utf-8') as csv_fi
 
         writer.writerow({
             'NumeroPartida': numero_partida,
-            'Fecha': fecha,
-            'Hora': hora,
+            'Fecha': fecha_formateada,
+            'Hora': hora_formateada,
             'Color': color,
             'Oponente': oponente,
             'Resultado': resultado,
@@ -102,4 +123,4 @@ with open('datos_ajedrez.csv', mode='w', newline='', encoding='utf-8') as csv_fi
             'Movimientos': len(tiempos_movimientos) + 1
         })
 
-print('El archivo CSV ha sido generado exitosamente con los ELO incluidos.')
+print('El archivo CSV ha sido generado exitosamente con la fecha en formato adecuado.')
